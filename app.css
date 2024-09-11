@@ -42,6 +42,7 @@ h2 {
 .actions-wrapper {
   display: flex;
   margin-top: 24px;
+  align-items: center;
 }
 
 button {

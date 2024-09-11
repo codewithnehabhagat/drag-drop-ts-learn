@@ -23,26 +23,29 @@
           <div class="actions-wrapper">
             <button class="primary-button" type="submit">Submit</button>
             <button class="secondary-button" type="reset">Clear</button>
+            <div class="loading">Submitting...</div>
           </div>
         </form>
       </div>
     </template>
 
-    <!-- <div class="container task-list-wrapper"></div> -->
     <template id="single-task">
-      <li>
-        <h4></h4>
-        <p></p>
-      </li>
+        <li>
+            <h4></h4>
+            <p></p>
+        </li>
     </template>
     <template id="task-list">
-      <section class="task-list">
-        <header>
-          <h2 class="task-title"></h2>
-        </header>
-        <ul></ul>
-      </section>
+        <section class="task-list">
+            <header>
+                <h2 class="task-title"></h2>
+            </header>
+            <ul></ul>
+        </section>
     </template>
-    <div id="app"></div>
+    <div id="app">
+        <div class="container task-list-wrapper" id="task-list-wrapper"></div>
+
+    </div>
   </body>
 </html>
