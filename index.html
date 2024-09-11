@@ -1,12 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Tasks</title>
+    <link rel="stylesheet" href="app.css" />
     <script src="dist/app.js" defer></script>
-</head>
-<body>
-    Hello World!
-</body>
+  </head>
+  <body>
+    <template id="task-input">
+      <div class="container">
+        <h2>Add Task</h2>
+        <form>
+          <div class="form-control">
+            <label for="task-name">Task Name</label>
+            <input id="task-name" autocomplete="off" />
+          </div>
+          <div class="form-control">
+            <label for="task-description">Task Description</label>
+            <textarea id="task-description" rows="3"></textarea>
+          </div>
+          <div class="actions-wrapper">
+            <button class="primary-button" type="submit">Submit</button>
+            <button class="secondary-button" type="reset">Clear</button>
+          </div>
+        </form>
+      </div>
+    </template>
+
+    <!-- <div class="container task-list-wrapper"></div> -->
+    <template id="single-task">
+      <li>
+        <h4></h4>
+        <p></p>
+      </li>
+    </template>
+    <template id="task-list">
+      <section class="task-list">
+        <header>
+          <h2 class="task-title"></h2>
+        </header>
+        <ul></ul>
+      </section>
+    </template>
+    <div id="app"></div>
+  </body>
 </html>
