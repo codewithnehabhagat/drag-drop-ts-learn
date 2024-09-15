@@ -28,10 +28,12 @@ class State<T> {
     this.setState(this.stateVariable);
   }
 
-  setState(updatedState: T) {
+  setState(updatedState: T, executeListener: Boolean = true) {
     this.stateVariable = updatedState;
-    for (const listenerFn of this.stateChangeListeners) {
-      listenerFn(updatedState);
+    if (executeListener) {
+      for (const listenerFn of this.stateChangeListeners) {
+        listenerFn(updatedState);
+      }
     }
   }
 
@@ -75,8 +77,11 @@ class TaskItem extends Component<Task, HTMLElement, HTMLDivElement> {
   taskNameEle: HTMLHeadElement;
   taskDescriptionEle: HTMLParagraphElement;
 
-  constructor(private listId: string, private task: Task) {
+  constructor(listId: string, private task: Task) {
     super("single-task", listId, false, `${listId}-task-single-${task.taskId}`);
+
+    this.element.addEventListener("dragstart", this.handleDragStart.bind(this));
+    this.element.addEventListener("dragend", this.handleDragEnd.bind(this));
 
     this.taskNameEle = this.element.querySelector("h4") as HTMLHeadElement;
     this.taskNameEle.innerHTML = task.title;
@@ -86,12 +91,35 @@ class TaskItem extends Component<Task, HTMLElement, HTMLDivElement> {
     ) as HTMLParagraphElement;
     this.taskDescriptionEle.innerHTML = task.description;
   }
-  render(item: Task): void {}
+  render(): void {}
+
+  // Handle drag start event
+  handleDragStart(event: DragEvent) {
+    const target = event.target as HTMLElement;
+
+    if (target.id === this.element.id) {
+      // Store the dragged item id in the dataTransfer object
+      event.dataTransfer?.setData(
+        "text/plain",
+        JSON.stringify({ listId: target.id, taskId: this.task.taskId })
+      );
+      target.classList.add("dragging");
+    }
+  }
+
+  // Handle drag end event
+  handleDragEnd(event: DragEvent) {
+    const target = event.target as HTMLElement;
+    if (target.id === this.element.id) {
+      target.classList.remove("dragging");
+    }
+  }
 }
 
 class TaskList extends Component<Task[], HTMLDivElement, HTMLDivElement> {
   taskListTitle: HTMLHeadingElement;
   taskListElement: HTMLUListElement;
+  taskService!: TaskService;
 
   constructor(private taskType: TaskStatus) {
     const listId = `task-list-projects-${taskType}`.toLowerCase();
@@ -103,10 +131,40 @@ class TaskList extends Component<Task[], HTMLDivElement, HTMLDivElement> {
     listElement.id = `${listId}-ul`;
     this.taskListElement = listElement;
 
+    this.element.addEventListener("dragover", this.handleDragOver.bind(this));
+    this.element.addEventListener("drop", this.handleDrop.bind(this));
+
     this.taskListTitle = this.element.querySelector(
       `header > h2`
     ) as HTMLHeadingElement;
     this.taskListTitle.innerHTML = taskType;
+  }
+
+  handleDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  handleDrop(event: DragEvent) {
+    event.preventDefault();
+    const target = event.target as HTMLElement;
+    const eventDataString = event.dataTransfer?.getData("text/plain");
+    if (eventDataString) {
+      const eventData = JSON.parse(eventDataString);
+      if (
+        target.classList.contains("task-list") &&
+        eventData?.listId &&
+        eventData?.taskId
+      ) {
+        if (eventData?.taskId) {
+          this.taskService.changeStatus(eventData.taskId, this.taskType);
+        }
+
+        const draggedElement = document.getElementById(eventData.listId);
+        if (draggedElement) {
+          target.appendChild(draggedElement);
+        }
+      }
+    }
   }
 
   render(taskList: Task[]): void {
@@ -116,6 +174,10 @@ class TaskList extends Component<Task[], HTMLDivElement, HTMLDivElement> {
     for (const task of tasksByType) {
       new TaskItem(this.taskListElement.id, task);
     }
+  }
+
+  registerService(service: TaskService): void {
+    this.taskService = service;
   }
 }
 
@@ -204,6 +266,19 @@ class TaskService {
       this.loadingState.setState(false);
     }, 300);
   }
+
+  changeStatus(taskId: string, status: TaskStatus) {
+    const task = this.findTaskById(taskId);
+
+    if (task) {
+      task.status = status;
+      this.taskState.setState([...this.taskState.getState()]);
+    }
+  }
+
+  findTaskById(taskId: string): Task | undefined {
+    return this.taskState.getState().find((e) => e.taskId === taskId);
+  }
 }
 
 class App {
@@ -236,6 +311,9 @@ class App {
 
     this.taskService = new TaskService(this.loadingState, this.taskState);
     this.taskForm.registerService(this.taskService);
+    this.taskList.registerService(this.taskService);
+    this.taskListInProgress.registerService(this.taskService);
+    this.taskListDone.registerService(this.taskService);
   }
 }
 
